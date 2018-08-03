@@ -18,17 +18,19 @@ class HersheyView extends JPanel {
   private double                zoom = 8;
 
   private HersheyView () throws IOException {
+    // Build glyphs from James Hurt's ASCII format
     String font = getResource("hershey.txt");
     StringTokenizer tok = new StringTokenizer(font, "\n\r");
     List<String> lines = new ArrayList<>();
+    // Step 1: recombine lines that were split at 72 character boundary
     while (tok.hasMoreElements()) {
       String line = tok.nextToken();
-      boolean isNewGlyph = true;
+      boolean startOfGlyph = true;
       for (int ii = 0; ii < Math.min(4, line.length()); ii++) {
         char cc = line.charAt(ii);
-        isNewGlyph &= (Character.isDigit(cc) || cc == ' ');
+        startOfGlyph &= (Character.isDigit(cc) || cc == ' ');
       }
-      if (isNewGlyph) {
+      if (startOfGlyph) {
         lines.add(line);
       } else {
         int idx = lines.size() - 1;
@@ -37,6 +39,7 @@ class HersheyView extends JPanel {
         lines.add(p1);
       }
     }
+    // Step 2: Parse Hurt format and convert to Path2D.Double object
     for (String line : lines) {
       Path2D.Double path = new Path2D.Double();
       int code = Integer.parseInt(line.substring(0, 5).trim());
@@ -63,7 +66,7 @@ class HersheyView extends JPanel {
       }
       glyphs.add(new HersheyGlyph(code, path, left, right));
     }
-    // Build Hershey code to ASCII lookup tables from ascii.txt file
+    // Build Hershey code to ASCII code lookup tables from ascii.txt file
     String lookup = getResource("ascii.txt");
     tok = new StringTokenizer(lookup, "\n\r");
     while (tok.hasMoreElements()) {
@@ -101,7 +104,7 @@ class HersheyView extends JPanel {
       fis.close();
       return new String(data);
     } else {
-      throw new IOException("Unable to fine file: " + file);
+      throw new IOException("Unable to find file: " + file);
     }
   }
 
@@ -279,10 +282,10 @@ class HersheyView extends JPanel {
       JComboBox<String> zoom = new JComboBox<>(new String[] {"8", "16", "32", "64"});
       zoom.addActionListener(ev -> hershey.setZoom((String) zoom.getSelectedItem()));
       controls.add(zoom);
-      JButton vectors = new JButton("Line List");
+      JButton vectors = new JButton("Show Vectors");
       controls.add(vectors);
       vectors.addActionListener(ev -> {
-        JDialog dialog = new JDialog(frame, "Show Vectors", Dialog.ModalityType.DOCUMENT_MODAL);
+        JDialog dialog = new JDialog(frame, "Vectors", Dialog.ModalityType.DOCUMENT_MODAL);
         dialog.setLocationRelativeTo(hershey);
         JTextArea txt = new JTextArea();
         JScrollPane sPane = new JScrollPane(txt);

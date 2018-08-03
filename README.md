@@ -8,7 +8,7 @@ I originally created HersheyView as a tool to support the developoment of a set 
 ### Features
  - Click the "**`Show Origin`**" checkbox to display the origin of the vectors that make up each character glyph.
  - Click the "**`Show Grid`**" checkbox to display a unit grid
- - Click the "**`Show L/R`**" checkbox to display red, vertical lines that show the horizontal space needed by the glyph.
+ - Click the "**`Show L/R`**" checkbox to display red, vertical lines that show left and right boundaries of the glyph.
  - Use the dropdown to select a zoom factor of 8 to 64 times.
  - Click the "**`Show Vectors`**" button to display a list of all the vectors (x1, y1, x2, y2) used to draw the glyph.
  - Use the slider and the left/right arrows under the view area to select a glyph.
@@ -35,6 +35,6 @@ Each glyph is assigned a code that's displayed in the upper left corner of the v
  - Script Complex
  - Script Simplex
  
-Note: There are also a wide variety of specialized symbnols included.   Dr. Hershey also developed a Japanese character font, but those glyphs are not included in the code.
+Note: There are also a wide variety of specialized symbnols included that do not have ASCII equivalents.   In addition, Dr. Hershey also developed a Japanese character font, but those glyphs are not included in the code.
 ### Requirements
 Java 8 JDK, or later must be installed in order to compile the code.  There is also a [**Runnable JAR file**](https://github.com/wholder/HersheyView/tree/master/out/artifacts/HersheyView_jar) included in the checked in code that you can download.   On a Mac, just double click the `GerberPlot.jar` file and it should start.  Then, use `File->Open Gerber File` to open a file and then use the `Options` menu to select different render modes.  _Note: you may have to select the `GerberPlot.jar` file, then do a right click and select "Open" the first time you run the file to satisfy Mac OS' security checks._  You should also be able to run the JAR file on Windows or Linux systems, but you'll need to have a Java 8 JRE, or later installed and follow the appropriate process for each needed to run an executable JAR file.
