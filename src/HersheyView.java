@@ -10,12 +10,12 @@ import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.showMessageDialog;
 
 class HersheyView extends JPanel {
-  private List<HersheyGlyph>  glyphs = new ArrayList<>();
-  Map<Integer,Integer>        ascii = new HashMap<>();
-  Map<Integer,String>         family = new HashMap<>();
-  private int                 index;
-  private boolean             showGrid, showLR, showOrigin;
-  private double              zoom = 8;
+  private List<HersheyGlyph>    glyphs = new ArrayList<>();
+  private Map<Integer,Integer>  ascii = new HashMap<>();
+  private Map<Integer,String>   family = new HashMap<>();
+  private int                   index;
+  private boolean               showGrid, showLR, showOrigin;
+  private double                zoom = 8;
 
   private HersheyView () throws IOException {
     String font = getResource("hershey.txt");
@@ -85,8 +85,6 @@ class HersheyView extends JPanel {
               ascii.put(ii, code++);
               family.put(ii, parts[0]);
             }
-          } else {
-            //throw new IllegalAccessException("Error parsing ascii.txt");
           }
         }
       }
