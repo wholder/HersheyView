@@ -11,6 +11,7 @@ I originally created HersheyView as a tool to support the developoment of a set 
  - Click the "**`Show L/R`**" checkbox to display red, vertical lines that show the horizontal space needed by the glyph.
  - Use the dropdown to select a zoom factor of 8 to 64 times.
  - Click the "**`Show Vectors`**" button to display a list of all the vectors (x1, y1, x2, y2) used to draw the glyph.
+ - Use the slider and the left/right arrows under the view area to select a glyph.
 
 Each glyph is assigned a code that's displayed in the upper left corner of the view area.  This code is unique to Dr. Hershey's fonts and does not correspond to standard ASCII, or any other character coding scheme.  However, the characters needed to build a set of ASCII characters is available in the set of glyphs and, using a set of lookup tables, the code will display the ASCII code for a glyph (it it exists) as well as the name of font family, which includes:
 
