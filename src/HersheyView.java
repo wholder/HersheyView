@@ -282,7 +282,7 @@ class HersheyView extends JPanel {
       JButton vectors = new JButton("Line List");
       controls.add(vectors);
       vectors.addActionListener(ev -> {
-        JDialog dialog = new JDialog(frame, "Line List", Dialog.ModalityType.DOCUMENT_MODAL);
+        JDialog dialog = new JDialog(frame, "Show Vectors", Dialog.ModalityType.DOCUMENT_MODAL);
         dialog.setLocationRelativeTo(hershey);
         JTextArea txt = new JTextArea();
         JScrollPane sPane = new JScrollPane(txt);
