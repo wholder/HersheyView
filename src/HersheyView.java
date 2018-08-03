@@ -3,21 +3,108 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.showMessageDialog;
 
 class HersheyView extends JPanel {
-  private List<HersheyGlyph>  glyphs;
+  private List<HersheyGlyph>  glyphs = new ArrayList<>();
+  Map<Integer,Integer>        ascii = new HashMap<>();
+  Map<Integer,String>         family = new HashMap<>();
   private int                 index;
   private boolean             showGrid, showLR, showOrigin;
   private double              zoom = 8;
 
-  private HersheyView (List<HersheyGlyph>  glyphs) {
-    this.glyphs = glyphs;
+  private HersheyView () throws IOException {
+    String font = getResource("hershey.txt");
+    StringTokenizer tok = new StringTokenizer(font, "\n\r");
+    List<String> lines = new ArrayList<>();
+    while (tok.hasMoreElements()) {
+      String line = tok.nextToken();
+      boolean isNewGlyph = true;
+      for (int ii = 0; ii < Math.min(4, line.length()); ii++) {
+        char cc = line.charAt(ii);
+        isNewGlyph &= (Character.isDigit(cc) || cc == ' ');
+      }
+      if (isNewGlyph) {
+        lines.add(line);
+      } else {
+        int idx = lines.size() - 1;
+        String p1 = lines.get(idx) + line;
+        lines.remove(idx);
+        lines.add(p1);
+      }
+    }
+    for (String line : lines) {
+      Path2D.Double path = new Path2D.Double();
+      int code = Integer.parseInt(line.substring(0, 5).trim());
+      int verts = Integer.parseInt(line.substring(5, 8).trim());
+      int left = line.charAt(8) - 'R';
+      int right = line.charAt(9) - 'R';
+      boolean move = true;
+      for (int ii = 0; ii < verts - 1; ii++) {
+        int idx = ii * 2;
+        char cx = line.charAt(10 + idx);
+        char cy = line.charAt(11 + idx);
+        if (cx == ' ' && cy == 'R') {
+          move = true;
+        } else {
+          int xx = cx - 'R';
+          int yy = cy - 'R';
+          if (move) {
+            path.moveTo(xx, yy);
+            move = false;
+          } else {
+            path.lineTo(xx, yy);
+          }
+        }
+      }
+      glyphs.add(new HersheyGlyph(code, path, left, right));
+    }
+    // Build Hershey code to ASCII lookup tables from ascii.txt file
+    String lookup = getResource("ascii.txt");
+    tok = new StringTokenizer(lookup, "\n\r");
+    while (tok.hasMoreElements()) {
+      String line = tok.nextToken();
+      String[] parts = line.split(":");
+      int code = 32;
+      if (parts.length == 2) {
+        String[] codes = parts[1].split(",");
+        for (String tmp : codes) {
+          String[] seq = tmp.split("-");
+          if (seq.length == 1) {
+            int val = Integer.parseInt(seq[0]);
+            ascii.put(val, code++);
+            family.put(val, parts[0]);
+          } else if (seq.length == 2) {
+            int start = Integer.parseInt(seq[0]);
+            int end = Integer.parseInt(seq[1]);
+            for (int ii = start; ii <= end; ii++) {
+              ascii.put(ii, code++);
+              family.put(ii, parts[0]);
+            }
+          } else {
+            //throw new IllegalAccessException("Error parsing ascii.txt");
+          }
+        }
+      }
+    }
+  }
+
+  private String getResource (String file) throws IOException {
+    InputStream fis = HersheyView.class.getResourceAsStream(file);
+    if (fis != null) {
+      byte[] data = new byte[fis.available()];
+      if (fis.read(data) != data.length) {
+        throw new IOException("Unable to read file: " + file);
+      }
+      fis.close();
+      return new String(data);
+    } else {
+      throw new IOException("Unable to fine file: " + file);
+    }
   }
 
   public void paint (Graphics g) {
@@ -64,7 +151,16 @@ class HersheyView extends JPanel {
     g2.setStroke(new BasicStroke((2.0f)));
     g2.setPaint(Color.black);
     g2.draw(af.createTransformedShape(item.path));
-    g2.drawString("Code: " + item.code + "  (0x" + Integer.toHexString(item.code).toUpperCase() + ")", 20, 20);
+    g2.drawString("Code:   " + item.code + "  (0x" + Integer.toHexString(item.code).toUpperCase() + ")", 20, 20);
+    if (ascii.containsKey(item.code)) {
+      int asc = ascii.get(item.code);
+      g2.drawString("ASCII:  " + asc + "  (0x" + Integer.toHexString(asc).toUpperCase() + ")", 20, 35);
+      g2.drawString("Family: " + family.get(item.code), 20, 50);
+    }
+  }
+
+  private int glyphCount () {
+    return glyphs.size();
   }
 
   private void nextGlyph () {
@@ -148,150 +244,92 @@ class HersheyView extends JPanel {
   }
 
   public static void main (String[] args) {
-    String font = "";
-    String file = "hershey.txt";
+    JFrame frame = new JFrame("Hershey Font Viewer");
+    frame.setResizable(false);
+    frame.setLayout(new BorderLayout());
     try {
-      InputStream fis = HersheyView.class.getResourceAsStream(file);
-      if (fis != null) {
-        byte[] data = new byte[fis.available()];
-        if (fis.read(data) != data.length) {
-          throw new IOException("Unable to read file: " + file);
+      HersheyView hershey = new HersheyView();
+      hershey.setPreferredSize(new Dimension(800, 800));
+      frame.add(hershey, BorderLayout.CENTER);
+      JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, hershey.glyphCount() - 1, 0);
+      slider.addChangeListener(ev -> hershey.setGlyph(slider.getValue()));
+      JPanel bottomPane = new JPanel(new BorderLayout());
+      bottomPane.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+      bottomPane.add(slider, BorderLayout.CENTER);
+      // Define Left button
+      JButton undo = new JButton("<");
+      undo.addActionListener(e -> hershey.prevGlyph());
+      undo.setPreferredSize(new Dimension(24, 12));
+      bottomPane.add(undo, BorderLayout.WEST);
+      // Define Right button
+      JButton redo = new JButton(">");
+      redo.addActionListener(e -> hershey.nextGlyph());
+      redo.setPreferredSize(new Dimension(24, 12));
+      bottomPane.add(redo, BorderLayout.EAST);
+      // Add Control panel
+      JPanel controls = new JPanel();
+      controls.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+      JCheckBox origin = new JCheckBox("Show Origin");
+      controls.add(origin);
+      origin.addActionListener(ev -> hershey.showOrigin(origin.isSelected()));
+      JCheckBox grid = new JCheckBox("Show Grid");
+      controls.add(grid);
+      grid.addActionListener(ev -> hershey.showGrid(grid.isSelected()));
+      JCheckBox leftRight = new JCheckBox("Show L/R");
+      controls.add(leftRight);
+      leftRight.addActionListener(ev -> hershey.showLeftRight(leftRight.isSelected()));
+      JComboBox<String> zoom = new JComboBox<>(new String[] {"8", "16", "32", "64"});
+      zoom.addActionListener(ev -> hershey.setZoom((String) zoom.getSelectedItem()));
+      controls.add(zoom);
+      JButton vectors = new JButton("Line List");
+      controls.add(vectors);
+      vectors.addActionListener(ev -> {
+        JDialog dialog = new JDialog(frame, "Line List", Dialog.ModalityType.DOCUMENT_MODAL);
+        dialog.setLocationRelativeTo(hershey);
+        JTextArea txt = new JTextArea();
+        JScrollPane sPane = new JScrollPane(txt);
+        txt.setMargin(new Insets(3, 3, 3, 3));
+        txt.setEditable(true);
+        txt.setFont(new Font("Courier", Font.PLAIN, 14));
+        DecimalFormat df = new DecimalFormat("0");
+        for (Line2D.Double line : hershey.getSelectPaths()) {
+          txt.append(pad(df.format(line.x1)));
+          txt.append(", ");
+          txt.append(pad(df.format(line.y1)));
+          txt.append(", ");
+          txt.append(pad(df.format(line.x2)));
+          txt.append(", ");
+          txt.append(pad(df.format(line.y2)));
+          txt.append("\n");
         }
-        fis.close();
-        font = new String(data);
-      } else {
-        throw new IOException("Unable to fine file: " + file);
-      }
+        txt.setCaretPosition(0);
+        dialog.add(sPane, BorderLayout.CENTER);
+        dialog.setSize(200, 300);
+        Rectangle dim1 = frame.getBounds();
+        Rectangle dim2 = vectors.getBounds();
+        dialog.setLocation(dim1.x + dim2.x, dim1.y + dim2.y);
+        dialog.setVisible(true);
+      });
+      frame.add(controls, BorderLayout.NORTH);
+      frame.add(bottomPane, BorderLayout.SOUTH);
+      frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+      frame.pack();
+      frame.setLocationRelativeTo(null);
+      frame.setResizable(false);
+      frame.setVisible(true);
     } catch (Exception ex) {
       ex.printStackTrace();
       showMessageDialog(null, ex.getMessage(), "Error", PLAIN_MESSAGE);
       System.exit(1);
     }
-    StringTokenizer tok = new StringTokenizer(font, "\n\r");
-    List<String> lines = new ArrayList<>();
-    while (tok.hasMoreElements()) {
-      String line = tok.nextToken();
-      boolean isNewGlyph = true;
-      for (int ii = 0; ii < Math.min(4, line.length()); ii++) {
-        char cc = line.charAt(ii);
-        isNewGlyph &= (Character.isDigit(cc) || cc == ' ');
-      }
-      if (isNewGlyph) {
-        lines.add(line);
-      } else {
-        int idx = lines.size() - 1;
-        String p1 = lines.get(idx) + line;
-        lines.remove(idx);
-        lines.add(p1);
-      }
-    }
-    List<HersheyGlyph>  glyphs = new ArrayList<>();
-    for (String line : lines) {
-      Path2D.Double path = new Path2D.Double();
-      int code = Integer.parseInt(line.substring(0, 5).trim());
-      int verts = Integer.parseInt(line.substring(5, 8).trim());
-      int left = line.charAt(8) - 'R';
-      int right = line.charAt(9) - 'R';
-      boolean move = true;
-      for (int ii = 0; ii < verts - 1; ii++) {
-        int idx = ii * 2;
-        char cx = line.charAt(10 + idx);
-        char cy = line.charAt(11 + idx);
-        if (cx == ' ' && cy == 'R') {
-          move = true;
-        } else {
-          int xx = cx - 'R';
-          int yy = cy - 'R';
-          if (move) {
-            path.moveTo(xx, yy);
-            move = false;
-          } else {
-            path.lineTo(xx, yy);
-          }
-        }
-      }
-      glyphs.add(new HersheyGlyph(code, path, left, right));
-    }
-
-    JFrame frame = new JFrame("Hershey Font Viewer");
-    frame.setResizable(false);
-    frame.setLayout(new BorderLayout());
-    HersheyView hershey = new HersheyView(glyphs);
-    hershey.setPreferredSize(new Dimension(800, 800));
-
-    frame.add(hershey, BorderLayout.CENTER);
-    JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, glyphs.size() - 1, 0);
-    slider.addChangeListener(ev -> hershey.setGlyph(slider.getValue()));
-    JPanel bottomPane = new JPanel(new BorderLayout());
-    bottomPane.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-    bottomPane.add(slider, BorderLayout.CENTER);
-    // Define Left button
-    JButton undo = new JButton("<");
-    undo.addActionListener(e -> hershey.prevGlyph());
-    undo.setPreferredSize(new Dimension(24, 12));
-    bottomPane.add(undo, BorderLayout.WEST);
-    // Define Right button
-    JButton redo = new JButton(">");
-    redo.addActionListener(e -> hershey.nextGlyph());
-    redo.setPreferredSize(new Dimension(24, 12));
-    bottomPane.add(redo, BorderLayout.EAST);
-    // Add Control panel
-    JPanel controls = new JPanel();
-    controls.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-    JCheckBox origin = new JCheckBox("Show Origin");
-    controls.add(origin);
-    origin.addActionListener(ev -> hershey.showOrigin(origin.isSelected()));
-    JCheckBox grid = new JCheckBox("Show Grid");
-    controls.add(grid);
-    grid.addActionListener(ev -> hershey.showGrid(grid.isSelected()));
-    JCheckBox leftRight = new JCheckBox("Show L/R");
-    controls.add(leftRight);
-    leftRight.addActionListener(ev -> hershey.showLeftRight(leftRight.isSelected()));
-    JComboBox<String> zoom = new JComboBox<>(new String[] {"8", "16", "32", "64"});
-    zoom.addActionListener(ev -> hershey.setZoom((String) zoom.getSelectedItem()));
-    controls.add(zoom);
-    JButton vectors = new JButton("Line List");
-    controls.add(vectors);
-    vectors.addActionListener(ev -> {
-      JDialog dialog = new JDialog(frame, "Line List", Dialog.ModalityType.DOCUMENT_MODAL);
-      dialog.setLocationRelativeTo(hershey);
-      JTextArea txt = new JTextArea();
-      JScrollPane sPane = new JScrollPane(txt);
-      txt.setMargin(new Insets(3, 3, 3, 3));
-      txt.setEditable(true);
-      txt.setFont(new Font("Courier", Font.PLAIN, 14));
-      DecimalFormat df = new DecimalFormat("0");
-      for (Line2D.Double line : hershey.getSelectPaths()) {
-        txt.append(pad(df.format(line.x1)));
-        txt.append(", ");
-        txt.append(pad(df.format(line.y1)));
-        txt.append(", ");
-        txt.append(pad(df.format(line.x2)));
-        txt.append(", ");
-        txt.append(pad(df.format(line.y2)));
-        txt.append("\n");
-      }
-      txt.setCaretPosition(0);
-      dialog.add(sPane, BorderLayout.CENTER);
-      dialog.setSize(200, 300);
-      Rectangle dim1 = frame.getBounds();
-      Rectangle dim2 = vectors.getBounds();
-      dialog.setLocation(dim1.x + dim2.x, dim1.y + dim2.y);
-      dialog.setVisible(true);
-    });
-    frame.add(controls, BorderLayout.NORTH);
-    frame.add(bottomPane, BorderLayout.SOUTH);
-    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-    frame.pack();
-    frame.setLocationRelativeTo(null);
-    frame.setResizable(false);
-    frame.setVisible(true);
   }
 
   private static String pad (String val) {
-    while (val.length() < 3) {
-      val = " " + val;
+    StringBuilder valBuilder = new StringBuilder(val);
+    while (valBuilder.length() < 3) {
+      valBuilder.insert(0, " ");
     }
+    val = valBuilder.toString();
     return val;
   }
 }
