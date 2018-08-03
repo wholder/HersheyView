@@ -1,5 +1,4 @@
 import javax.swing.*;
-import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.geom.*;
 import java.io.*;
@@ -260,7 +259,8 @@ class HersheyView extends JPanel {
       JScrollPane sPane = new JScrollPane(txt);
       txt.setMargin(new Insets(3, 3, 3, 3));
       txt.setEditable(true);
-      DecimalFormat df = new DecimalFormat("##0");
+      txt.setFont(new Font("Courier", Font.PLAIN, 14));
+      DecimalFormat df = new DecimalFormat("0");
       for (Line2D.Double line : hershey.getSelectPaths()) {
         txt.append(pad(df.format(line.x1)));
         txt.append(", ");
@@ -289,6 +289,9 @@ class HersheyView extends JPanel {
   }
 
   private static String pad (String val) {
-    return val.startsWith("-") ? val : " " + val;
+    while (val.length() < 3) {
+      val = " " + val;
+    }
+    return val;
   }
 }

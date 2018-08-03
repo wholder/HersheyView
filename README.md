@@ -1,7 +1,7 @@
 <p align="center"><img src="https://github.com/wholder/HersheyView/blob/master/images/HersheyView%20Screenshot.png"></p>
 
 # HersheyView
-This code is Java implementation of a program to render and display the [Hershey Vector fonts](https://en.wikipedia.org/wiki/Hershey_fonts) developed c. 1967 by Dr. Allen Vincent Hershey at the Naval Weapons Laboratory.  The code parses the fonts from a compact, text-based format beleived to have been developed by James Hurt at Cognition, Inc.
+This code is Java implementation of a program to render and display the [Hershey Vector fonts](https://en.wikipedia.org/wiki/Hershey_fonts) developed c. 1967 by [Dr. Allen Vincent Hershey](http://iagenweb.org/boards/jefferson/obituaries/index.cgi?read=56609) at the Naval Weapons Laboratory.  The code parses the fonts from a compact, text-based format beleived to have been developed by James Hurt at Cognition, Inc.
 
 I originally created HersheyView as a tool to support the developoment of a set of vector fonts for my [LaserCut program](https://github.com/wholder/LaserCut) (still in development), but decided to publish it here to help draw attention to this pioneering work by Dr. Hershey.  His work formed the basis of modern, digital typography, but is today nearly forgotten.  For more information about Dr. Hershey's fonts, see the article "[Reviving the Hershey fonts](https://lwn.net/Articles/654819/)" by Adobe's Frank Grießhammer (from a presentation at [TypeCon](http://www.typecon.com/) 2015, in Denver CO)
 
