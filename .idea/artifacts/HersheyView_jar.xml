@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="HersheyView:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/HersheyView_jar</output-path>
+    <root id="archive" name="HersheyView.jar">
+      <element id="module-output" name="HersheyView" />
+    </root>
+  </artifact>
+</component>
