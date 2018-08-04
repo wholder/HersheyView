@@ -6,6 +6,7 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.showMessageDialog;
@@ -20,7 +21,7 @@ class HersheyView extends JPanel {
   private boolean               showGrid, showLR, showOrigin;
   private double                zoom = 8;
 
-  private HersheyView () throws IOException {
+  private HersheyView () {
     setPreferredSize(new Dimension(800, 800));
     // Build glyphs from James Hurt's ASCII format
     String font = getResource("hershey.txt");
@@ -104,18 +105,13 @@ class HersheyView extends JPanel {
     }
   }
 
-  private String getResource (String file) throws IOException {
-    InputStream fis = HersheyView.class.getResourceAsStream(file);
-    if (fis != null) {
-      byte[] data = new byte[fis.available()];
-      if (fis.read(data) != data.length) {
-        throw new IOException("Unable to read file: " + file);
-      }
-      fis.close();
-      return new String(data);
-    } else {
-      throw new IOException("Unable to find file: " + file);
+  private String getResource (String fileName) {
+    InputStream is = getClass().getClassLoader().getResourceAsStream(fileName);
+    if (is != null) {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+      return reader.lines().collect(Collectors.joining(System.lineSeparator()));
     }
+    return "";
   }
 
   public void paint (Graphics g) {
