@@ -377,7 +377,7 @@ class HersheyView extends JPanel {
       RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
       g2.setRenderingHints(hints);
-      g2.setStroke(new BasicStroke((0.75f)));
+      g2.setStroke(new BasicStroke((1.0f)));
       g2.setBackground(Color.white);
       g2.clearRect(0, 0, bounds.width, bounds.height);
       g2.setColor(Color.darkGray);
