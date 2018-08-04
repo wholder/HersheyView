@@ -11,10 +11,10 @@ I originally created HersheyView as a tool to support the developoment of a set 
  - Click the "**`Show L/R`**" checkbox to display red, vertical lines that show left and right boundaries of the glyph.
  - Use the dropdown to select a zoom factor of 8 to 64 times.
  - Click the "**`Show Vectors`**" button to display a list of all the vectors (x1, y1, x2, y2) used to draw the glyph.
- - Click the "**`Find Glyph`**" button to get a popup menu where you can select a specific glyph from the different font families available.
+ - Click the "**`Find Glyph`**" button to get a popup menu where you can select a specific character from the different font families.  Note: you can only select characters that map to an ASCII code value `0x20` - `0x7F`.
  - Use the slider and the left/right arrows under the view area to select a glyph.  While the slider is selected, the left/right arrow keys will also control it.
 
-Each glyph is assigned a code that's displayed in the upper left corner of the view area.  This code is unique to Dr. Hershey's fonts and does not correspond to standard ASCII, or any other character coding scheme.  However, the characters needed to build a set of ASCII characters is available in the set of glyphs and, using a set of lookup tables, the code will display the ASCII code for a glyph (it it exists) as well as the name of font family, which includes:
+Each glyph is assigned a code that's displayed in the upper left corner of the view area.  This code is unique to Dr. Hershey's fonts and does not correspond to standard ASCII, or any other character coding scheme.  However, the characters needed to build a set of ASCII characters is available in the set of glyphs and, using a set of lookup tables in the file `resources/ascii.txt`, the code will display the ASCII code for a glyph (it it exists) as well as the name of font families, which are:
 
  - Cyrillic Complex
  - Gothic English Triplex
@@ -36,6 +36,6 @@ Each glyph is assigned a code that's displayed in the upper left corner of the v
  - Script Complex
  - Script Simplex
  
-Note: There are also a wide variety of specialized symbnols included that do not have ASCII equivalents.   In addition, Dr. Hershey also developed a Japanese character font, but those glyphs are not included in the code.
+Note: There are also a wide variety of specialized symbnols included that do not have ASCII equivalents, so these are not shown in the "Find Glyph" menus.  At the moment, these can only be browsed using the slider control and the left/rigth arrow buttons.  Dr. Hershey also developed a Japanese character font, but those glyphs are not included in the code.
 ### Requirements
 Java 8 JDK, or later must be installed in order to compile the code.  There is also a [**Runnable JAR file**](https://github.com/wholder/HersheyView/tree/master/out/artifacts/HersheyView_jar) included in the checked in code that you can download.   On a Mac, just double click the `GerberPlot.jar` file and it should start.  Then, use `File->Open Gerber File` to open a file and then use the `Options` menu to select different render modes.  _Note: you may have to select the `GerberPlot.jar` file, then do a right click and select "Open" the first time you run the file to satisfy Mac OS' security checks._  You should also be able to run the JAR file on Windows or Linux systems, but you'll need to have a Java 8 JRE, or later installed and follow the appropriate process for each needed to run an executable JAR file.

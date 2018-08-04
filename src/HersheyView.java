@@ -365,7 +365,7 @@ class HersheyView extends JPanel {
   }
 
   static class Glyph extends ImageIcon {
-    private static Rectangle bounds = new Rectangle(24, 24);
+    private static Rectangle bounds = new Rectangle(24, 26);
 
     Glyph (Path2D.Double path) {
       BufferedImage bImg = new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
