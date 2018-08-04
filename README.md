@@ -1,15 +1,15 @@
 <p align="center"><img src="https://github.com/wholder/HersheyView/blob/master/images/HersheyView%20Screenshot.png"></p>
 
 # HersheyView
-This code is Java implementation of a program to render and display the [Hershey Vector fonts](https://en.wikipedia.org/wiki/Hershey_fonts) developed c. 1967 by [Dr. Allen Vincent Hershey](http://iagenweb.org/boards/jefferson/obituaries/index.cgi?read=56609) at the Naval Weapons Laboratory.  The code parses the fonts from a compact, text-based format beleived to have been developed by James Hurt of Cognition, Inc.
+This code is Java program that can render and display the [Hershey Vector fonts](https://en.wikipedia.org/wiki/Hershey_fonts) developed c. 1967 by [Dr. Allen Vincent Hershey](http://iagenweb.org/boards/jefferson/obituaries/index.cgi?read=56609) at the Naval Weapons Laboratory.  The code parses the fonts from a compact, text-based format beleived to have been developed by James Hurt of Cognition, Inc.
 
-I originally created HersheyView as a tool to support the developoment of a set of vector fonts for my [LaserCut program](https://github.com/wholder/LaserCut) (still in development), but decided to publish it here to help draw attention to this pioneering work by Dr. Hershey.  His work formed the basis of modern, digital typography, but is today nearly forgotten.  For more information about Dr. Hershey's fonts, see the article "[Reviving the Hershey fonts](https://lwn.net/Articles/654819/)" by Adobe's [Frank Grießhammer](https://www.adobe.com/products/type/font-designers/frank-griesshammer.html) (from a presentation at [TypeCon](http://www.typecon.com/) 2015, in Denver CO.)  A [video by the same author](https://vimeo.com/178015110) presents more information about the development of the fonts by Dr. Hershey as well as photos and background information on his life and career.
+I originally created HersheyView as a tool to support the developoment of a set of vector fonts for my [LaserCut program](https://github.com/wholder/LaserCut) (still in development), but decided to publish it here to help draw attention to the pioneering work by Dr. Hershey.  His work formed the basis of modern, digital typography, but is today nearly forgotten.  For more information about Dr. Hershey's fonts, see the article "[Reviving the Hershey fonts](https://lwn.net/Articles/654819/)" by Adobe's [Frank Grießhammer](https://www.adobe.com/products/type/font-designers/frank-griesshammer.html) (from a presentation at [TypeCon](http://www.typecon.com/) 2015, in Denver CO.)  A [video by the same author](https://vimeo.com/178015110) presents more information about the development of the fonts by Dr. Hershey as well as photos and background information on his life and career.
 
 ### Features
  - Click the "**`Show Origin`**" checkbox to display the origin of the vectors that make up each character glyph.
  - Click the "**`Show Grid`**" checkbox to display a unit grid
  - Click the "**`Show L/R`**" checkbox to display red, vertical lines that show left and right boundaries of the glyph.
- - Use the dropdown to select a zoom factor of 8 to 64 times.
+ - Use the dropdown list to select a zoom factor of 8 to 64 times.
  - Click the "**`Show Vectors`**" button to display a list of all the vectors (x1, y1, x2, y2) used to draw the glyph.
  - Click the "**`Find Glyph`**" button to get a popup menu where you can select a specific character from the different font families.  Note: you can only select characters that map to an ASCII code value `0x20` - `0x7F`.
  - Use the slider and the left/right arrows under the view area to select a glyph.  While the slider is selected, the left/right arrow keys will also control it.
