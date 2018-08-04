@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.*;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -13,11 +15,14 @@ class HersheyView extends JPanel {
   private List<HersheyGlyph>    glyphs = new ArrayList<>();
   private Map<Integer,Integer>  ascii = new HashMap<>();
   private Map<Integer,String>   family = new HashMap<>();
+  private Map<String,List<Integer>>  families = new TreeMap<>();
+  private Map<Integer,Integer>  hIndex = new HashMap<>();
   private int                   index;
   private boolean               showGrid, showLR, showOrigin;
   private double                zoom = 8;
 
   private HersheyView () throws IOException {
+    setPreferredSize(new Dimension(800, 800));
     // Build glyphs from James Hurt's ASCII format
     String font = getResource("hershey.txt");
     StringTokenizer tok = new StringTokenizer(font, "\n\r");
@@ -40,6 +45,7 @@ class HersheyView extends JPanel {
       }
     }
     // Step 2: Parse Hurt format and convert to Path2D.Double object
+    int hdx = 0;
     for (String line : lines) {
       Path2D.Double path = new Path2D.Double();
       int code = Integer.parseInt(line.substring(0, 5).trim());
@@ -64,6 +70,7 @@ class HersheyView extends JPanel {
           }
         }
       }
+      hIndex.put(code, hdx++);
       glyphs.add(new HersheyGlyph(code, path, left, right));
     }
     // Build Hershey code to ASCII code lookup tables from ascii.txt file
@@ -74,12 +81,14 @@ class HersheyView extends JPanel {
       String[] parts = line.split(":");
       int code = 32;
       if (parts.length == 2) {
+        List<Integer> hCodes = new ArrayList<>();
         String[] codes = parts[1].split(",");
         for (String tmp : codes) {
           String[] seq = tmp.split("-");
           if (seq.length == 1) {
             int val = Integer.parseInt(seq[0]);
             ascii.put(val, code++);
+            hCodes.add(val);
             family.put(val, parts[0]);
           } else if (seq.length == 2) {
             int start = Integer.parseInt(seq[0]);
@@ -87,9 +96,11 @@ class HersheyView extends JPanel {
             for (int ii = start; ii <= end; ii++) {
               ascii.put(ii, code++);
               family.put(ii, parts[0]);
+              hCodes.add(ii);
             }
           }
         }
+        families.put(parts[0], hCodes);
       }
     }
   }
@@ -160,6 +171,9 @@ class HersheyView extends JPanel {
     }
   }
 
+  private Map<String,List<Integer>> getFamiles () {
+    return families;
+  }
   private int glyphCount () {
     return glyphs.size();
   }
@@ -180,6 +194,11 @@ class HersheyView extends JPanel {
 
   private void setGlyph (int index) {
     this.index = index;
+    repaint();
+  }
+
+  private void selectHersheyCode (int code) {
+    this.index= hIndex.get(code);
     repaint();
   }
 
@@ -250,7 +269,6 @@ class HersheyView extends JPanel {
     frame.setLayout(new BorderLayout());
     try {
       HersheyView hershey = new HersheyView();
-      hershey.setPreferredSize(new Dimension(800, 800));
       frame.add(hershey, BorderLayout.CENTER);
       JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, hershey.glyphCount() - 1, 0);
       slider.addChangeListener(ev -> hershey.setGlyph(slider.getValue()));
@@ -258,15 +276,15 @@ class HersheyView extends JPanel {
       bottomPane.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
       bottomPane.add(slider, BorderLayout.CENTER);
       // Define Left button
-      JButton undo = new JButton("<");
-      undo.addActionListener(e -> hershey.prevGlyph());
-      undo.setPreferredSize(new Dimension(24, 12));
-      bottomPane.add(undo, BorderLayout.WEST);
+      JButton left = new JButton("\u25C0");
+      left.addActionListener(e -> hershey.prevGlyph());
+      left.setPreferredSize(new Dimension(24, 12));
+      bottomPane.add(left, BorderLayout.WEST);
       // Define Right button
-      JButton redo = new JButton(">");
-      redo.addActionListener(e -> hershey.nextGlyph());
-      redo.setPreferredSize(new Dimension(24, 12));
-      bottomPane.add(redo, BorderLayout.EAST);
+      JButton right = new JButton("\u25B6");
+      right.addActionListener(e -> hershey.nextGlyph());
+      right.setPreferredSize(new Dimension(24, 12));
+      bottomPane.add(right, BorderLayout.EAST);
       // Add Control panel
       JPanel controls = new JPanel();
       controls.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
@@ -311,6 +329,35 @@ class HersheyView extends JPanel {
         dialog.setLocation(dim1.x + dim2.x, dim1.y + dim2.y);
         dialog.setVisible(true);
       });
+      // Add "Find Glyph" Menu Button
+      JButton find = new JButton("Find Glyph");
+      JPopupMenu families = new JPopupMenu("");
+      Map<String,List<Integer>> fMap = hershey.getFamiles();
+      for (String familiy : fMap.keySet()) {
+        List<Integer> hCodes = fMap.get(familiy);
+        JMenu fMenu = new JMenu(familiy);
+        families.add(fMenu);
+        JPopupMenu chars = fMenu.getPopupMenu();
+        chars.setLayout(new GridLayout(12, 16));
+        for (int ii = 32; ii < 128; ii++) {
+          int idx = hCodes.get(ii - 32);
+          JMenuItem mItem = new JMenuItem(Character.toString((char) ii));
+          mItem.addActionListener(ev -> {
+            hershey.selectHersheyCode(idx);
+          });
+          Dimension dim = mItem.getPreferredSize();
+          mItem.setPreferredSize(new Dimension(dim.width - (dim.width / 4), dim.height));
+          chars.add(mItem);
+        }
+      }
+      find.addActionListener( new ActionListener() {
+        public void actionPerformed(ActionEvent ae) {
+          families.show(find, find.getWidth()/2, find.getHeight()/2);
+        }
+      });
+      controls.add(find);
+
+
       frame.add(controls, BorderLayout.NORTH);
       frame.add(bottomPane, BorderLayout.SOUTH);
       frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
