@@ -342,22 +342,14 @@ class HersheyView extends JPanel {
         for (int ii = 32; ii < 128; ii++) {
           int idx = hCodes.get(ii - 32);
           JMenuItem mItem = new JMenuItem(Character.toString((char) ii));
-          mItem.addActionListener(ev -> {
-            hershey.selectHersheyCode(idx);
-          });
+          mItem.addActionListener(ev -> hershey.selectHersheyCode(idx));
           Dimension dim = mItem.getPreferredSize();
           mItem.setPreferredSize(new Dimension(dim.width - (dim.width / 4), dim.height));
           chars.add(mItem);
         }
       }
-      find.addActionListener( new ActionListener() {
-        public void actionPerformed(ActionEvent ae) {
-          families.show(find, find.getWidth()/2, find.getHeight()/2);
-        }
-      });
+      find.addActionListener(ae -> families.show(find, find.getWidth()/2, find.getHeight()/2));
       controls.add(find);
-
-
       frame.add(controls, BorderLayout.NORTH);
       frame.add(bottomPane, BorderLayout.SOUTH);
       frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
