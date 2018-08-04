@@ -1,8 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -197,6 +196,10 @@ class HersheyView extends JPanel {
     repaint();
   }
 
+  private Path2D.Double getShape (int code) {
+    return glyphs.get(hIndex.get(code)).path;
+  }
+
   private void selectHersheyCode (int code) {
     this.index= hIndex.get(code);
     repaint();
@@ -338,11 +341,12 @@ class HersheyView extends JPanel {
         JMenu fMenu = new JMenu(familiy);
         families.add(fMenu);
         JPopupMenu chars = fMenu.getPopupMenu();
-        chars.setLayout(new GridLayout(12, 16));
+        chars.setLayout(new GridLayout(12, 8));
         for (int ii = 32; ii < 128; ii++) {
-          int idx = hCodes.get(ii - 32);
-          JMenuItem mItem = new JMenuItem(Character.toString((char) ii));
-          mItem.addActionListener(ev -> hershey.selectHersheyCode(idx));
+          int hCode = hCodes.get(ii - 32);
+          JMenuItem mItem = new JMenuItem(new Glyph(hershey.getShape(hCode)));
+          mItem.setIconTextGap(0);
+          mItem.addActionListener(ev -> hershey.selectHersheyCode(hCode));
           Dimension dim = mItem.getPreferredSize();
           mItem.setPreferredSize(new Dimension(dim.width - (dim.width / 4), dim.height));
           chars.add(mItem);
@@ -363,6 +367,27 @@ class HersheyView extends JPanel {
       System.exit(1);
     }
   }
+
+  static class Glyph extends ImageIcon {
+    private static Rectangle bounds = new Rectangle(24, 24);
+
+    Glyph (Path2D.Double path) {
+      BufferedImage bImg = new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+      Graphics2D g2 = bImg.createGraphics();
+      RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+      g2.setRenderingHints(hints);
+      g2.setStroke(new BasicStroke((0.75f)));
+      g2.setBackground(Color.white);
+      g2.clearRect(0, 0, bounds.width, bounds.height);
+      g2.setColor(Color.darkGray);
+      AffineTransform at = AffineTransform.getTranslateInstance(bounds.width / 2.0, bounds.height / 2.0);
+      g2.draw(at.createTransformedShape(path));
+      g2.setColor(Color.white);
+      setImage(bImg);
+    }
+  }
+
 
   private static String pad (String val) {
     StringBuilder valBuilder = new StringBuilder(val);
