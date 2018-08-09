@@ -131,7 +131,7 @@ class HersheyView extends JPanel {
     af.translate(xOff, yOff);
     af.scale(zoom, zoom);
     if (showGrid) {
-      int jj = (int) (50 / (zoom / 8));
+      int jj = (int) (60 / (zoom / 8));
       // Draw Grid
       g2.setStroke(new BasicStroke((0.25f)));
       g2.setPaint(Color.blue);
@@ -314,6 +314,8 @@ class HersheyView extends JPanel {
       controls.add(leftRight);
       leftRight.addActionListener(ev -> hershey.showLeftRight(leftRight.isSelected()));
       JComboBox<String> zoom = new JComboBox<>(new String[] {"8", "16", "32", "64"});
+      zoom.setSelectedIndex(1);
+      hershey.setZoom((String) zoom.getSelectedItem());
       zoom.addActionListener(ev -> hershey.setZoom((String) zoom.getSelectedItem()));
       controls.add(zoom);
       JButton vectors = new JButton("Show Vectors");
@@ -487,7 +489,7 @@ class HersheyView extends JPanel {
       frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
       frame.pack();
       frame.setLocationRelativeTo(null);
-      frame.setResizable(false);
+      frame.setResizable(true);
       frame.setVisible(true);
     } catch (Exception ex) {
       ex.printStackTrace();
