@@ -1,15 +1,20 @@
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
+import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
-import static javax.swing.JOptionPane.PLAIN_MESSAGE;
-import static javax.swing.JOptionPane.showMessageDialog;
+import static javax.swing.JOptionPane.*;
+import static javax.swing.JOptionPane.OK_OPTION;
 
 class HersheyView extends JPanel {
   private List<HersheyGlyph>    glyphs = new ArrayList<>();
@@ -221,8 +226,19 @@ class HersheyView extends JPanel {
     repaint();
   }
 
-  private Line2D.Double[] getSelectPaths () {
-    HersheyGlyph item = glyphs.get(index);
+  private Line2D.Double[] getVectors (int code) {
+    return getVectors(glyphs.get(hIndex.get(code)));
+  }
+
+  private Line2D.Double[] getSelectedVectors () {
+    return getVectors(glyphs.get(index));
+  }
+
+  private HersheyGlyph getGlyph (int code) {
+    return glyphs.get(hIndex.get(code));
+  }
+
+  private  Line2D.Double[] getVectors (HersheyGlyph item) {
     ArrayList<Line2D.Double> lines = new ArrayList<>();
     PathIterator pi = item.path.getPathIterator(new AffineTransform());
     double xx = 0, yy = 0;
@@ -264,6 +280,7 @@ class HersheyView extends JPanel {
 
   public static void main (String[] args) {
     JFrame frame = new JFrame("Hershey Font Viewer");
+    Preferences  prefs = Preferences.userRoot().node(frame.getClass().getName());
     frame.setResizable(false);
     frame.setLayout(new BorderLayout());
     try {
@@ -310,7 +327,7 @@ class HersheyView extends JPanel {
         txt.setEditable(true);
         txt.setFont(new Font("Courier", Font.PLAIN, 14));
         DecimalFormat df = new DecimalFormat("0");
-        for (Line2D.Double line : hershey.getSelectPaths()) {
+        for (Line2D.Double line : hershey.getSelectedVectors()) {
           txt.append(pad(df.format(line.x1)));
           txt.append(", ");
           txt.append(pad(df.format(line.y1)));
@@ -330,25 +347,140 @@ class HersheyView extends JPanel {
       });
       // Add "Find Glyph" Menu Button
       JButton find = new JButton("Find Glyph");
-      JPopupMenu families = new JPopupMenu("");
-      Map<String,List<Integer>> fMap = hershey.getFamiles();
-      for (String familiy : fMap.keySet()) {
-        List<Integer> hCodes = fMap.get(familiy);
-        JMenu fMenu = new JMenu(familiy);
-        families.add(fMenu);
-        JPopupMenu chars = fMenu.getPopupMenu();
-        chars.setLayout(new GridLayout(12, 8));
-        for (int ii = 32; ii < 128; ii++) {
-          int hCode = hCodes.get(ii - 32);
-          JMenuItem mItem = new JMenuItem(new Glyph(hershey.getShape(hCode)));
-          mItem.setIconTextGap(0);
-          mItem.addActionListener(ev -> hershey.selectHersheyCode(hCode));
-          Dimension dim = mItem.getPreferredSize();
-          mItem.setPreferredSize(new Dimension(dim.width - (dim.width / 4), dim.height));
-          chars.add(mItem);
+      find.addActionListener(ae -> {
+        JPopupMenu families = new JPopupMenu("");
+        Map<String,List<Integer>> fMap = hershey.getFamiles();
+        for (String familiy : fMap.keySet()) {
+          List<Integer> hCodes = fMap.get(familiy);
+          JMenu fMenu = new JMenu(familiy);
+          families.add(fMenu);
+          fMenu.addMenuListener(new MenuListener() {
+            @Override
+            public void menuSelected (MenuEvent es) {
+              if ((ae.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
+                if (((JMenu)((JMenu) es.getSource()).getComponent()).getItemCount() == 0) {
+                  JMenuItem mItem = new JMenuItem("Export Font Vectors");
+                  fMenu.add(mItem);
+                  mItem.addActionListener(ev2 -> {
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setDialogTitle("Save Vector Data as Text File");
+                    fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+                    FileNameExtensionFilter nameFilter = new FileNameExtensionFilter("Vector Data (*.txt)", "txt");
+                    fileChooser.addChoosableFileFilter(nameFilter);
+                    fileChooser.setFileFilter(nameFilter);
+                    fileChooser.setSelectedFile(new File(prefs.get("default.dir", "/")));
+                    if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+                      File sFile = fileChooser.getSelectedFile();
+                      String fPath = sFile.getPath();
+                      if (!fPath.contains(".")) {
+                        sFile = new File(fPath + ".txt");
+                      }
+                      try {
+                        if (!sFile.exists() ||
+                          showConfirmDialog(frame, "Overwrite Existing file?", "Warning", YES_NO_OPTION, PLAIN_MESSAGE) == OK_OPTION) {
+                          List<Integer> codes = hershey.families.get(familiy);
+                          StringBuilder buf = new StringBuilder("int[][][] " + familiy.replace(" ", "") + " = {");
+                          Rectangle rect = new Rectangle(0, 0, 0, 0);
+                          for (int ii = 32; ii < 128; ii++) {
+                            Line2D.Double[] vecs = hershey.getVectors(codes.get(ii - 32));
+                            for (Line2D.Double line : vecs) {
+                              rect.x = Math.min(rect.x, (int) line.x1);
+                              rect.x = Math.min(rect.x, (int) line.x2);
+                              rect.y = Math.min(rect.y, (int) line.y1);
+                              rect.y = Math.min(rect.y, (int) line.y2);
+                              rect.width = Math.max(rect.width, (int) line.x1);
+                              rect.width = Math.max(rect.width, (int) line.x2);
+                              rect.height = Math.max(rect.height, (int) line.y1);
+                              rect.height = Math.max(rect.height, (int) line.y2);
+                            }
+                          }
+                          buf.append(" // Bounds {");
+                          buf.append(Integer.toString(rect.x));
+                          buf.append(", ");
+                          buf.append(Integer.toString(rect.y));
+                          buf.append(", ");
+                          buf.append(Integer.toString(rect.width));
+                          buf.append(", ");
+                          buf.append(Integer.toString(rect.height));
+                          buf.append("} ");
+                          buf.append(Integer.toString(rect.width - rect.x));
+                          buf.append(" x ");
+                          buf.append(Integer.toString(rect.height - rect.y));
+                          buf.append("\n // Note: {left,right},{x1,y1,x2,y2},..\n");
+                          for (int ii = 32; ii < 128; ii++) {
+                            buf.append(" // ASCII '");
+                            buf.append((char) ii);
+                            buf.append("'\n");
+                            buf.append(" {");
+                            int idx = 0;
+                            HersheyGlyph glyph =  hershey.getGlyph(codes.get(ii - 32));
+                            Line2D.Double[] vecs = hershey.getVectors(glyph);
+                            buf.append("{");
+                            buf.append(Integer.toString(glyph.left));
+                            buf.append(",");
+                            buf.append(Integer.toString(glyph.right));
+                            buf.append(vecs.length > 0 ? "}," : "}");
+                            for (int jj = 0; jj < vecs.length; jj++) {
+                              Line2D.Double line = vecs[jj];
+                              if (idx++ > 5) {
+                                buf.append("\n  ");
+                                idx = 0;
+                              }
+                              buf.append("{");
+                              buf.append(Integer.toString((int) line.x1));
+                              buf.append(",");
+                              buf.append(Integer.toString((int) line.y1));
+                              buf.append(",");
+                              buf.append(Integer.toString((int) line.x2));
+                              buf.append(",");
+                              buf.append(Integer.toString((int) line.y2));
+                              buf.append(jj < (vecs.length - 1) ? "}," : "}");
+                            }
+                            buf.append(ii < 127 ? "},\n" : "}\n");
+                          }
+                          buf.append("};\n");
+                          FileOutputStream fileOut = new FileOutputStream(sFile);
+                          fileOut.write(buf.toString().getBytes());
+                          fileOut.close();
+                          fileOut.close();
+                        }
+                      } catch (IOException ex) {
+                        showMessageDialog(frame, "Unable to save file", "Error", PLAIN_MESSAGE);
+                        ex.printStackTrace();
+                      }
+                      prefs.put("default.dir", sFile.getAbsolutePath());
+                    }
+
+                  });
+                }
+              } else {
+                if (((JMenu)((JMenu) es.getSource()).getComponent()).getItemCount() == 0) {
+                  JPopupMenu chars = fMenu.getPopupMenu();
+                  chars.setLayout(new GridLayout(12, 8));
+                  for (int ii = 32; ii < 128; ii++) {
+                    int hCode = hCodes.get(ii - 32);
+                    JMenuItem mItem = new JMenuItem(new Glyph(hershey.getShape(hCode)));
+                    mItem.setIconTextGap(0);
+                    mItem.addActionListener(ev -> hershey.selectHersheyCode(hCode));
+                    Dimension dim = mItem.getPreferredSize();
+                    mItem.setPreferredSize(new Dimension(dim.width - (dim.width / 4), dim.height));
+                    chars.add(mItem);
+                  }
+                }
+              }
+            }
+
+            @Override
+            public void menuDeselected (MenuEvent e) {
+            }
+
+            @Override
+            public void menuCanceled (MenuEvent e) {
+            }
+          });
         }
-      }
-      find.addActionListener(ae -> families.show(find, find.getWidth()/2, find.getHeight()/2));
+        families.show(find, find.getWidth() / 2, find.getHeight() / 2);
+      });
       controls.add(find);
       frame.add(controls, BorderLayout.NORTH);
       frame.add(bottomPane, BorderLayout.SOUTH);
