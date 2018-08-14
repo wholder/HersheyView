@@ -381,7 +381,8 @@ class HersheyView extends JPanel {
                         if (!sFile.exists() ||
                           showConfirmDialog(frame, "Overwrite Existing file?", "Warning", YES_NO_OPTION, PLAIN_MESSAGE) == OK_OPTION) {
                           List<Integer> codes = hershey.families.get(familiy);
-                          StringBuilder buf = new StringBuilder("int[][][] " + familiy.replace(" ", "") + " = {");
+
+                          StringBuilder buf = new StringBuilder("// Font: " + familiy + " - ");
                           Rectangle rect = new Rectangle(0, 0, 0, 0);
                           for (int ii = 32; ii < 128; ii++) {
                             Line2D.Double[] vecs = hershey.getVectors(codes.get(ii - 32));
@@ -396,7 +397,7 @@ class HersheyView extends JPanel {
                               rect.height = Math.max(rect.height, (int) line.y2);
                             }
                           }
-                          buf.append(" // Bounds {");
+                          buf.append("Bounds {");
                           buf.append(Integer.toString(rect.x));
                           buf.append(", ");
                           buf.append(Integer.toString(rect.y));
@@ -408,27 +409,20 @@ class HersheyView extends JPanel {
                           buf.append(Integer.toString(rect.width - rect.x));
                           buf.append(" x ");
                           buf.append(Integer.toString(rect.height - rect.y));
-                          buf.append("\n // Note: {left,right},{x1,y1,x2,y2},..\n");
+                          buf.append(" - Note: {left,right},{x1,y1,x2,y2},..\n");
+
                           for (int ii = 32; ii < 128; ii++) {
-                            buf.append(" // ASCII '");
+                            buf.append("'");
                             buf.append((char) ii);
-                            buf.append("'\n");
-                            buf.append(" {");
-                            int idx = 0;
+                            buf.append("':");
                             HersheyGlyph glyph =  hershey.getGlyph(codes.get(ii - 32));
                             Line2D.Double[] vecs = hershey.getVectors(glyph);
-                            buf.append("{");
                             buf.append(Integer.toString(glyph.left));
                             buf.append(",");
                             buf.append(Integer.toString(glyph.right));
-                            buf.append(vecs.length > 0 ? "}," : "}");
+                            buf.append(vecs.length > 0 ? "|" : "");
                             for (int jj = 0; jj < vecs.length; jj++) {
                               Line2D.Double line = vecs[jj];
-                              if (idx++ > 5) {
-                                buf.append("\n  ");
-                                idx = 0;
-                              }
-                              buf.append("{");
                               buf.append(Integer.toString((int) line.x1));
                               buf.append(",");
                               buf.append(Integer.toString((int) line.y1));
@@ -436,11 +430,11 @@ class HersheyView extends JPanel {
                               buf.append(Integer.toString((int) line.x2));
                               buf.append(",");
                               buf.append(Integer.toString((int) line.y2));
-                              buf.append(jj < (vecs.length - 1) ? "}," : "}");
+                              buf.append(jj < (vecs.length - 1) ? "|" : "");
                             }
-                            buf.append(ii < 127 ? "},\n" : "}\n");
+                            buf.append("\n");
                           }
-                          buf.append("};\n");
+                          buf.append("\n");
                           FileOutputStream fileOut = new FileOutputStream(sFile);
                           fileOut.write(buf.toString().getBytes());
                           fileOut.close();

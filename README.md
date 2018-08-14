@@ -13,22 +13,16 @@ I originally created HersheyView as a tool to support the developoment of a set 
  - Click the "**`Show Vectors`**" button to display a list of all the vectors (x1, y1, x2, y2) used to draw the glyph.
  - Click the "**`Find Glyph`**" button to get a popup menu where you can select a specific character from the different font families.  Note: you can only select characters that map to an ASCII code value `0x20` - `0x7F`.
  - Use the slider and the left/right arrows under the view area to select a glyph.  While the slider is selected, the left/right arrow keys will also control it.
- - Click the "**`Find Glyph`**" button _while holding down a SHIFT key_ to select a font family and save it to a text file as an ```int[][][]``` array of all the vectors needed to draw all the ASCII characters in this font.  Output format of the text file looks like this:
+ - Click the "**`Find Glyph`**" button _while holding down a SHIFT key_ to select a font family and save it to a text file of all the vectors needed to draw all the ASCII characters in this font.  Output format of the text file looks like this:
  
  ```
- int[][][] RomanSimplex = { // Bounds {-11, -16, 11, 16} 22 x 32
-  // Note: {left,right},{x1,y1,x2,y2},..
-  // ASCII ' '
-  {{-8,8}},
-  // ASCII '!'
-  {{-5,5},{0,-12,0,2},{0,7,-1,8},{-1,8,0,9},{0,9,1,8},{1,8,0,7}},
-  // ASCII '"'
-  {{-8,8},{-4,-12,-4,-5},{4,-12,4,-5}},
-  // ASCII '#'
-  {{-10,11},{1,-16,-6,16},{7,-16,0,16},{-6,-3,8,-3},{-7,3,7,3}},
+  // Font: Roman Simplex - Bounds {-11, -16, 11, 16} 22 x 32 - Note: {left,right},{x1,y1,x2,y2},..
+  ' ':-8,8
+  '!':-5,5|0,-12,0,2|0,7,-1,8|-1,8,0,9|0,9,1,8|1,8,0,7
+  '"':-8,8|-4,-12,-4,-5|4,-12,4,-5
   ...
 ```
-Note: each character starts with a ```int[2]``` array that contains the "left" and "right" bounds information followed by a series of ```int[4]``` arrays that specify the line segments ```{x1, y1, x2, y2}``` used to draw the character.
+Note: each character consists of set of numbers separated by a '|' character.  The first set of two nunmbers contains the "left" and "right" bounds of the character.  This is followed by a series of 4 numbers that specify the line segments ```{x1, y1, x2, y2}``` used to draw the character.
 
 ### Info
 Each glyph is assigned a code that's displayed in the upper left corner of the view area.  This code is unique to Dr. Hershey's fonts and does not correspond to standard ASCII, or any other character coding scheme.  However, the characters needed to build a set of ASCII characters is available in the set of glyphs and, using a set of lookup tables in the file `resources/ascii.txt`, the code will display the ASCII code for a glyph (it it exists) as well as the name of font families, which are:
